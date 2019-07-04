@@ -3,6 +3,15 @@ give the perspective of interior from user with grease pencil
 give the measures of the room (cube for now)
 give the measures of the window
 
+
+# khoobish nesbat be parallex shader (fake interior) chie? age too oon hamin axe int ro bezarim chi mishe?
+masalan ye khoobish ine ke divar haye rooberoo, texture haye motafavet daran
+
+other ideas
+# change the time of the interior for example, darken the image to show the night...
+
+# car interior
+
 # exterior idea
 outside is a BIG ROOM!
 define the perspective of the photo with that rectangle (with grease pencil)
