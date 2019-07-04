@@ -21,8 +21,8 @@ reload(sys.modules['UV_Util']) # todo check existance
 bpy.app.handlers.frame_change_pre.clear()
 
 TOP_L = 0
-BUTTOM_L = 1
-BUTTOM_R = 2
+BOTTOM_L = 1
+BOTTOM_R = 2
 TOP_R = 3
 
 # give these info from user
@@ -34,82 +34,88 @@ pers_TR = Vector((424, 390))
 pers_BR = Vector((422, 163))
 
 window_length = 1
+window_height = 1.5
+windwo_size = Vector((1, 1.5))
+
 room_x_size = 4
 room_y_size = 4
-# room_height = 4
-# window_height = 1.5
-window_point = Vector(bpy.data.objects['Window'].location[:2])
-window_left = window_point - Vector((window_length/2, 0))
-window_right = window_point + Vector((window_length/2, 0))
-room_TL = window_point + Vector((-room_x_size/2, room_y_size))
-room_TR = window_point + Vector((room_x_size/2, room_y_size))
-room_BL = window_point - Vector((room_x_size/2, 0))
-room_BR = window_point + Vector((room_x_size/2, 0))
+room_height = 4
+room_size = Vector((4, 4, 4))
+
+window_point = Vector(bpy.data.objects['Window'].location)
+window_point_right_view = Vector((window_point.z, window_point.y))
+window_point_top_view = Vector(window_point[:2])
+window_left = window_point_top_view - Vector((windwo_size[0]/2, 0))
+window_right = window_point_top_view + Vector((windwo_size[0]/2, 0))
+window_top = window_point_right_view + Vector((windwo_size[1]/2, 0))
+window_bottom = window_point_right_view - Vector((windwo_size[1]/2, 0))
+
+# (x (top view), z (right view))
+room_TL = (window_point_top_view + Vector((-room_size.x/2, room_size.y)), window_point_right_view + Vector((room_size.z/2, room_size.y)))
+room_TR = (window_point_top_view + Vector((room_size.x/2, room_size.y)), window_point_right_view + Vector((-room_size.z/2, room_size.y)))
+room_BL = (window_point_top_view + Vector((-room_size.x/2, 0)), window_point_right_view + Vector((room_size.z/2, 0)))
+room_BR = (window_point_top_view + Vector((room_size.x/2, 0)), window_point_right_view + Vector((-room_size.z/2, 0)))
+
+obj = bpy.context.active_object
+cam = bpy.data.objects['Camera'] # from user
 
 # logic
-obj = bpy.context.active_object
-cam = bpy.data.objects['Camera']
 uv_util = UV_Util(obj)
 
 def distance_po_po_2d(point1, point2):
     diff = point1 - point2
     return math.sqrt(diff.dot(diff))
 
-def initialize_lengths():
-    # todo note: if the window is not moving, can pre calculated these points
-    window_point = bpy.data.objects['Window'].location[:2]
-    window_left = window_point - Vector((window_length/2, 0))
-    window_right = window_point + Vector((window_length/2, 0))
-    room_TL = window_point + Vector((-room_x_size/2, room_y_size))
-    room_TR = window_point + Vector((room_x_size/2, room_y_size))
-    room_BL = window_point - Vector((room_x_size/2, 0))
-    room_BR = window_point + Vector((room_x_size/2, 0))
-
-def top_view_po_to_x(vis_point, state):
+def map_3d_to_uv(axis, vis_point, state):
     if state == 'L':
-        x_pos = (vis_point.y - window_point.y) / room_y_size * pers_BL.x
+        pos = abs(vis_point.y - window_point.y) / room_size.y * pers_BL[axis//2]
     elif state == 'T':
-        x_pos = (vis_point.x - room_BL.x) / room_x_size * (pers_TR.x - pers_BL.x) + pers_BL.x
+        pos = abs(vis_point.x - room_BL[axis//2].x) / room_size[axis] * abs(pers_TR[axis//2] - pers_BL[axis//2]) + pers_BL[axis//2]
     else:
-        x_pos = image_size[0] - (vis_point.y - window_point.y) / room_y_size * (image_size[0] - pers_TR.x)
-    return x_pos
+        pos = image_size[axis//2] - abs(vis_point.y - window_point.y) / room_size.y * abs(image_size[axis//2] - pers_TR[axis//2])
+    return pos
 
-def calculate_state_and_vis_point(window_side_point):
-    cam_point = Vector(cam.location[:2])
+def calculate_state_and_vis_point(axis, window_side_point):
+    cam_point = Vector((cam.location[axis], cam.location[1]))
 
-    vis_line_dir = (window_side_point - cam_point)
+    vis_line_dir = window_side_point - cam_point
     vis_line_dir.normalize()
-    window_side_point = window_side_point + vis_line_dir * (room_x_size + room_y_size)
+    window_side_point = window_side_point + vis_line_dir * (room_size[axis] + room_size.y)
 
-    vis_point = mathutils.geometry.intersect_line_line_2d(cam_point, window_side_point, room_TL, room_TR)
+    vis_point = mathutils.geometry.intersect_line_line_2d(cam_point, window_side_point, room_TL[axis//2], room_TR[axis//2])
     state = 'T'
-    
     if vis_point is None:
-        vis_point = mathutils.geometry.intersect_line_line_2d(cam_point, window_side_point, room_TL, room_BL)
+        vis_point = mathutils.geometry.intersect_line_line_2d(cam_point, window_side_point, room_TL[axis//2], room_BL[axis//2])
         state = 'L'
         if vis_point is None:
             state = 'R'
-            vis_point = mathutils.geometry.intersect_line_line_2d(cam_point, window_side_point, room_TR, room_BR)
+            vis_point = mathutils.geometry.intersect_line_line_2d(cam_point, window_side_point, room_TR[axis//2], room_BR[axis//2])
     return state, vis_point
 
-def calculate_horizontal_points():
-    
-    left_state, left_vis_point = calculate_state_and_vis_point(window_left)
-    right_state, right_vis_point = calculate_state_and_vis_point(window_right)
+def calculate_UV_co():
+    left_state, left_vis_point = calculate_state_and_vis_point(0, window_left)
+    right_state, right_vis_point = calculate_state_and_vis_point(0, window_right)
         
-    left_x_pos = top_view_po_to_x(left_vis_point, left_state)
-    right_x_pos = top_view_po_to_x(right_vis_point, right_state)
+    left_x_pos = map_3d_to_uv(0, left_vis_point, left_state)
+    right_x_pos = map_3d_to_uv(0, right_vis_point, right_state)
     
-    return left_x_pos, right_x_pos
+    top_state, top_vis_point = calculate_state_and_vis_point(2, window_top)
+    bottom_state, bottom_vis_point = calculate_state_and_vis_point(2, window_bottom)
+
+    top_y_pos = map_3d_to_uv(2, top_vis_point, top_state)
+    bottom_y_pos = map_3d_to_uv(2, bottom_vis_point, bottom_state)
+ 
+    return left_x_pos, right_x_pos, top_y_pos, bottom_y_pos
 
 def main(scene):
     print('main')
-    
-    # calculate the position of the vertical edges of uv
-    left_x_pos, right_x_pos = calculate_horizontal_points()
-    print(left_x_pos, right_x_pos)
+
+    # calculate the position of the edges of uv plane 
+    left_x_pos, right_x_pos, top_y_pos, bottom_y_pos = calculate_UV_co()
+    print(top_y_pos, bottom_y_pos)
     uv_util.set_edge_pos(left_x_pos/image_size[0], 'L', 'x')
-    print('after set left edge')
-    uv_util.set_edge_pos(right_x_pos/image_size[0], 'R', 'x')    
+    uv_util.set_edge_pos(right_x_pos/image_size[0], 'R', 'x')
+    uv_util.set_edge_pos(1 - top_y_pos/image_size[1], 'T', 'y')
+    uv_util.set_edge_pos(1 - bottom_y_pos/image_size[1], 'B', 'y')   
 
 bpy.app.handlers.frame_change_pre.append(main)
