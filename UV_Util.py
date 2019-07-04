@@ -6,14 +6,28 @@ class UV_Util:
         print('init')
         self.obj = plane_obj
         self.scale = mathutils.Vector((1, 1))
+        self.edges = {'L':[0, 1], 'R':[2, 3], 'T':[0, 3], 'B':[1, 2]}
         
     def move_uv_vert(self, index, new_coordinate):
         UV_DATA = self.obj.data.uv_layers.active.data
         UV_DATA[index].uv = new_coordinate
 
+    def set_edge_pos(self, new_pos, edge, axis):
+        print('set edge')
+        UV_DATA = self.obj.data.uv_layers.active.data
+        for index in self.edges[edge]:
+            print(index, edge, axis)
+            if 'x' in axis:
+                UV_DATA[index].uv.x = new_pos
+            elif 'y' in axis:
+                UV_DATA[index].uv.y = new_pos
+
     def set_scale(self, abs_scale, axis):
-        self.scale_uv(1/self.scale.x, 'x')
-        self.scale_uv(1/self.scale.y, 'y')
+        if 'x' in axis:
+            self.scale_uv(1/self.scale.x, 'x')
+        if 'y' in axis:
+            self.scale_uv(1/self.scale.y, 'y')
+        
         self.scale_uv(abs_scale, axis)
         print('scaler {}, self.scale {}'.format(abs_scale, self.scale))
 

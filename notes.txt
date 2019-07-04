@@ -1,0 +1,8 @@
+#
+give the perspective of interior from user with grease pencil
+give the measures of the room (cube for now)
+give the measures of the window
+
+# exterior idea
+outside is a BIG ROOM!
+define the perspective of the photo with that rectangle (with grease pencil)
