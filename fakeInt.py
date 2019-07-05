@@ -67,13 +67,22 @@ def distance_po_po_2d(point1, point2):
     return math.sqrt(diff.dot(diff))
 
 def map_3d_to_uv(axis, vis_point, state):
-    if state == 'L':
-        pos = abs(vis_point.y - window_point.y) / room_size.y * pers_BL[axis//2]
-    elif state == 'T':
-        pos = abs(vis_point.x - room_BL[axis//2].x) / room_size[axis] * abs(pers_TR[axis//2] - pers_BL[axis//2]) + pers_BL[axis//2]
-    else:
-        pos = image_size[axis//2] - abs(vis_point.y - window_point.y) / room_size.y * abs(image_size[axis//2] - pers_TR[axis//2])
-    return pos
+    if axis == 0:
+        if state == 'L':
+            pos = abs(vis_point.y - window_point.y) / room_size.y * pers_BL[0] # problem
+        elif state == 'T':
+            pos = abs(vis_point.x - room_BL[0].x) / room_size[0] * abs(pers_TR[0] - pers_BL[0]) + pers_BL[0]
+        else:
+            pos = image_size[0] - abs(vis_point.y - window_point.y) / room_size.y * abs(image_size[0] - pers_TR[0])
+        return pos
+    elif axis == 2:
+        if state == 'L':
+            pos = image_size[1] - abs(vis_point.y - window_point.y) / room_size.y * abs(image_size[1] - pers_TR[1])
+        elif state == 'T':
+            pos = abs(vis_point.x - room_BR[1].x) / room_size[2] * abs(pers_TR[1] - pers_BL[1]) + pers_BL[1]
+        else:
+            pos = abs(vis_point.y - window_point.y) / room_size.y * pers_BL[1]
+        return pos
 
 def calculate_state_and_vis_point(axis, window_side_point):
     cam_point = Vector((cam.location[axis], cam.location[1]))
@@ -95,13 +104,14 @@ def calculate_state_and_vis_point(axis, window_side_point):
 def calculate_UV_co():
     left_state, left_vis_point = calculate_state_and_vis_point(0, window_left)
     right_state, right_vis_point = calculate_state_and_vis_point(0, window_right)
-        
+    
     left_x_pos = map_3d_to_uv(0, left_vis_point, left_state)
     right_x_pos = map_3d_to_uv(0, right_vis_point, right_state)
     
     top_state, top_vis_point = calculate_state_and_vis_point(2, window_top)
     bottom_state, bottom_vis_point = calculate_state_and_vis_point(2, window_bottom)
-
+    
+    print(top_vis_point, bottom_vis_point)
     top_y_pos = map_3d_to_uv(2, top_vis_point, top_state)
     bottom_y_pos = map_3d_to_uv(2, bottom_vis_point, bottom_state)
  
@@ -112,10 +122,10 @@ def main(scene):
 
     # calculate the position of the edges of uv plane 
     left_x_pos, right_x_pos, top_y_pos, bottom_y_pos = calculate_UV_co()
-    print(top_y_pos, bottom_y_pos)
+    # print(top_y_pos, 1 - top_y_pos/image_size[1], bottom_y_pos, 1 - bottom_y_pos/image_size[1])
     uv_util.set_edge_pos(left_x_pos/image_size[0], 'L', 'x')
     uv_util.set_edge_pos(right_x_pos/image_size[0], 'R', 'x')
-    uv_util.set_edge_pos(1 - top_y_pos/image_size[1], 'T', 'y')
-    uv_util.set_edge_pos(1 - bottom_y_pos/image_size[1], 'B', 'y')   
+    uv_util.set_edge_pos(top_y_pos/image_size[1], 'T', 'y')
+    uv_util.set_edge_pos(bottom_y_pos/image_size[1], 'B', 'y')   
 
 bpy.app.handlers.frame_change_pre.append(main)
