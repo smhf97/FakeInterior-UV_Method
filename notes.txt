@@ -1,4 +1,7 @@
-#
+#todo
+alan faghat darim az oon moraba' estefadeh mikonim va az khat haye perspective estefadeh nemikonim. bokonim behtar mishe...
+
+
 give the perspective of interior from user with grease pencil
 give the measures of the room (cube for now)
 give the measures of the window
@@ -9,6 +12,8 @@ masalan ye khoobish ine ke divar haye rooberoo, texture haye motafavet daran
 
 other ideas
 # change the time of the interior for example, darken the image to show the night...
+
+# put curtain on window
 
 # car interior
 
