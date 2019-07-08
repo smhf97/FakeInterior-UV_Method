@@ -6,5 +6,5 @@ The goal is to fake interior from the window, by changing the UV of the plane wi
 how to test this addon:
 This is not yet turn into an addon. It's just scripts for now.
 To test the functionality and development, download the repository.
-In blend file, 
+Then open the blend file and select the window and run the scripts. Then in 'test' tab, go to object mode and go to render mode and press space (or shift+space) to start the animation. Press 0 on numpad to go to camera view, then press shift+` and move the camera around and see the window.
 
